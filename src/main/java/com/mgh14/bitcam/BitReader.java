@@ -5,9 +5,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 
-import static com.mgh14.bitcam.NesColorHelper.COLORS;
-import static com.mgh14.bitcam.NesColorHelper.findClosestColor;
-import static com.mgh14.bitcam.NesColorHelper.rgbToInt;
+import static com.mgh14.bitcam.NesColorHelper.*;
 
 /**
  *
@@ -16,38 +14,46 @@ public class BitReader
 {
     private static final int ORIGINAL_WIDTH = 256;
     private static final int ORIGINAL_HEIGHT = 240;
+    // original NES: 256 horiz. x 240 vert.  (ratio of
     private static final double ASPECT_RATIO = (double) ORIGINAL_WIDTH / (double) ORIGINAL_HEIGHT;
 
     public static void main(String[] args)
     {
+        System.out.println("Transforming...");
         BufferedImage img = null;
         try {
-//            img = ImageIO.read(new File("/Users/mgh14/Desktop/me.jpg"));
-            img = ImageIO.read(new File("/Users/mgh14/Desktop/test.jpg"));
-        } catch (IOException e) {
+            img = ImageIO.read(new File("/Users/mgh14/Desktop/meae.jpg"));
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
         }
 
-        final int[][] imgPixels = getPixelsSlow(img);
+        final int[][] transformed = transformImage(img);
+
+        writePixelsToImage(transformed);
+        System.out.println("Done.");
+    }
+
+    public static int[][] transformImage(final BufferedImage image) {
+        final int[][] imgPixels = getPixelsSlow(image);
         System.out.println("Image Size: " + imgPixels.length + " " + imgPixels[0].length);
 
-        final int[][] newImgPixels = colorifyImage(imgPixels);
-        final int[][] newAgain = bittizeImage(newImgPixels);
-        writePixelsToImage(newAgain);
-
-        System.out.println("Done.");
+        final int[][] coloredPixels = colorifyImage(imgPixels);
+        return bittizeImage(coloredPixels);
     }
 
     private static int[][] bittizeImage(final int[][] imgPixels) {
         int width = imgPixels.length;
         int height = imgPixels[0].length;
-        int me = (int) (height / 256d) * 1;
+        int pixelChangeLimit = (int) (height / 256d);
 
         for (int i = 0; i < width; i++)
         {
             int currentPixel = imgPixels[i][height - 1];
             for (int j = height - 1; j >= 0; j--)
             {
-                if (j % me == 0) {
+                if (j % pixelChangeLimit == 0) {
                     currentPixel = imgPixels[i][j];
                 } else
                 {
@@ -59,7 +65,6 @@ public class BitReader
         return imgPixels;
     }
 
-    // original NES: 256 horiz. x 240 vert.  (ratio of
     private static int[][] colorifyImage(final int[][] imgPixels) {
         int width = imgPixels.length;
         int height = imgPixels[0].length;
@@ -70,7 +75,7 @@ public class BitReader
             for (int j = 0; j < height; j++)
             {
                 int currentPixel = imgPixels[i][j];
-                int closestColorIndex = findClosestColor(currentPixel);
+                int closestColorIndex = findClosestColor(currentPixel, NesColorHelper.COLORS);
                 final int closestColorInt = rgbToInt(COLORS[closestColorIndex][0],
                         COLORS[closestColorIndex][1], COLORS[closestColorIndex][2]);
                 newImgPixels[i][j] = closestColorInt;

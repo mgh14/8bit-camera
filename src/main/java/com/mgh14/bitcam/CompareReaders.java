@@ -37,6 +37,7 @@ public class CompareReaders
                 }
                 else
                 {
+                    //todo
                     //System.out.println("Not zero! " + i + "," + j + " diff: " + diff);
                 }
             }
@@ -46,39 +47,40 @@ public class CompareReaders
     }
 
     // note: this one is currently not working! (i.e. incorrect!)
-    private static int[][] getPixels(final BufferedImage img) {
+    public static int[][] getPixels(final BufferedImage img) {
         byte[] m = ((DataBufferByte) img.getData().getDataBuffer()).getData();
 
+        int mPointer = 0;
         int[][] imgPixels = new int[img.getWidth()][img.getHeight()];
         int bytesPerPixel = hasAlphaChannel(img) ? 4 : 3;
-        for (int i = 0; i < img.getWidth(); i++)
+        for (int i = 0; i < img.getHeight(); i++)
         {
 
-            for (int j = 0; j < img.getHeight(); j+=bytesPerPixel)
+            for (int j = 0; j < img.getWidth(); j++)
             {
                 int pixel = 0;
 
                 //1
-                byte currentByte = m[j];
-                pixel = pixel | (int) currentByte << (8 * (bytesPerPixel - 1));
-
-//                imgPixels[i][j] = (int) m[j + k];
+                byte currentByte = m[mPointer];
+                pixel = pixel | (currentByte);
 
                 //2
-                currentByte = m[j + 1];
-                pixel = pixel | (int) currentByte << (8 * (bytesPerPixel - 2));
+                currentByte = m[mPointer + 1];
+                pixel = pixel | (currentByte) << (8);
 
                 //3
-                currentByte = m[j + 2];
-                pixel = pixel | (int) currentByte << (8 * (bytesPerPixel - 3));
+                currentByte = m[mPointer + 2];
+                pixel = pixel | (currentByte) << (8 * 2);
 
                 if (bytesPerPixel == 4) {
                     //4
-                    currentByte = m[j + 3];
-                    pixel = pixel | (int) currentByte;
+                    currentByte = m[mPointer + 3];
+                    pixel = pixel | (currentByte) << (8 * 3);
                 }
 
-                imgPixels[i][j] = pixel;
+                mPointer = mPointer + bytesPerPixel;
+                int mine = pixel - img.getRGB(j, i);
+                imgPixels[j][i] = pixel;
             }
         }
 
